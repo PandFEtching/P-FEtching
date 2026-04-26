@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P&F Etching - Custom Desert Art</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; }
+    
+    header { background: linear-gradient(135deg, #cc0000 0%, #8b0000 100%); padding: 20px; text-align: center; }
+    header h1 { font-size: 2.5em; margin-bottom: 5px; }
+    header p { font-size: 1.1em; opacity: 0.9; }
+    
+    nav { background: #1a1a1a; padding: 15px; display: flex; justify-content: center; gap: 30px; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; }
+    nav a { color: #fff; text-decoration: none; padding: 8px 15px; border-radius: 5px; transition: all 0.3s; }
+    nav a:hover { background: #cc0000; }
+    .cart-btn { background: #cc0000; color: #fff; border: none; padding: 10px 25px; cursor: pointer; border-radius: 5px; font-size: 1em; }
+    .cart-btn:hover { background: #ff0000; }
+    .cart-count { background: #fff; color: #cc0000; padding: 2px 8px; border-radius: 50%; margin-left: 5px; font-weight: bold; }
+    
+    .hero { background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=1200'); background-size: cover; background-position: center; padding: 100px 20px; text-align: center; }
+    .hero h2 { font-size: 2.2em; margin-bottom: 15px; color: #cc0000; }
+    .hero p { font-size: 1.2em; max-width: 600px; margin: 0 auto; opacity: 0.9; }
+    
+    .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+    
+    .filter-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+    .filter-btn { background: #1a1a1a; color: #fff; border: 2px solid #333; padding: 10px 20px; cursor: pointer; border-radius: 25px; transition: all 0.3s; }
+    .filter-btn:hover, .filter-btn.active { background: #cc0000; border-color: #cc0000; }
+    
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; }
+    
+    .product-card { background: #1a1a1a; border-radius: 10px; overflow: hidden; transition: transform 0.3s, box-shadow 0.3s; }
+    .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(204,0,0,0.3); }
+    .product-image { width: 100%; height: 220px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .product-image img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .product-info { padding: 20px; }
+    .product-name { color: #cc0000; font-size: 1.3em; margin-bottom: 5px; }
+    .product-desc { color: #888; font-size: 0.9em; margin-bottom: 10px; line-height: 1.4; }
+    .product-price { color: #fff; font-size: 1.6em; font-weight: bold; margin-bottom: 15px; }
+    .add-to-cart { background: #cc0000; color: #fff; width: 100%; padding: 12px; border: none; cursor: pointer; border-radius: 5px; font-size: 1em; transition: all 0.3s; }
+    .add-to-cart:hover { background: #ff0000; transform: scale(1.02); }
+    
+    .cart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; overflow-y: auto; }
+    .cart-content { background: #1a1a1a; max-width: 600px; margin: 30px auto; padding: 30px; border-radius: 15px; min-height: auto; }
+    .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #333; }
+    .cart-header h2 { color: #cc0000; }
+    .close-cart { background: none; border: none; color: #fff; font-size: 2.5em; cursor: pointer; line-height: 1; }
+    .close-cart:hover { color: #cc0000; }
+    
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid #333; flex-wrap: wrap; gap: 15px; }
+    .cart-item-details { flex: 1; min-width: 200px; }
+    .cart-item-name { color: #cc0000; font-size: 1.2em; }
+    .cart-item-price { color: #888; }
+    .cart-item-qty { display: flex; align-items: center; gap: 10px; }
+    .qty-btn { background: #333; color: #fff; width: 35px; height: 35px; border: none; cursor: pointer; border-radius: 5px; font-size: 1.2em; }
+    .qty-btn:hover { background: #cc0000; }
+    .remove-btn { background: #8b0000; color: #fff; padding: 8px 15px; border: none; cursor: pointer; border-radius: 5px; }
+    
+    .cart-total { text-align: right; font-size: 1.8em; margin: 25px 0; color: #fff; }
+    .checkout-info { background: #2a2a2a; padding: 20px; margin-bottom: 20px; border-radius: 10px; border-left: 4px solid #cc0000; }
+    .checkout-info h3 { color: #cc0000; margin-bottom: 10px; }
+    .checkout-info p { margin: 5px 0; color: #ccc; }
+    .checkout-btn { background: #28a745; color: #fff; width: 100%; padding: 18px; border: none; cursor: pointer; border-radius: 10px; font-size: 1.2em; }
+    .checkout-btn:hover { background: #2eb855; }
+    
+    footer { background: #1a1a1a; padding: 40px 20px; text-align: center; margin-top: 60px; border-top: 3px solid #cc0000; }
+    footer h3 { color: #cc0000; margin-bottom: 15px; }
+    footer p { color: #888; margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>P&F Etching</h1>
+    <p>Custom Desert Southwest Art</p>
+  </header>
+  
+  <nav>
+    <a href="#">Home</a>
+    <a href="#products">Shop</a>
+    <a href="#contact">Contact</a>
+    <button class="cart-btn" onclick="openCart()">
+      Cart<span class="cart-count" id="cartCount">0</span>
+    </button>
+  </nav>
+  
+  <section class="hero">
+    <h2>Handcrafted Desert Art</h2>
+    <p>Unique tumbleweeds, horse sketches, cow skulls, and more. Each piece custom made to order.</p>
+  </section>
+  
+  <section class="container" id="products">
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="products-grid" id="productsGrid"></div>
+  </section>
+  
+  <div class="cart-modal" id="cartModal">
+    <div class="cart-content">
+      <div class="cart-header">
+        <h2>Your Cart</h2>
+        <button class="close-cart" onclick="closeCart()">&times;</button>
+      </div>
+      <div id="cartItems"></div>
+      <div class="cart-total">Total: $<span id="cartTotal">0</span></div>
+      <div class="checkout-info" id="checkoutInfo">
+        <h3>How to Pay</h3>
+        <p>Send via Venmo: <strong id="venmoUsername">@your-venmo</strong></p>
+        <p>Include your name and address in the note.</p>
+        <p>We'll email you to confirm after payment.</p>
+      </div>
+      <button class="checkout-btn" onclick="checkout()">Complete Order</button>
+    </div>
+  </div>
+  
+  <footer id="contact">
+    <h3>Contact Us</h3>
+    <p>Email: <span id="contactEmail">contact@example.com</span></p>
+    <p>Phone: <span id="contactPhone">555-123-4567</span></p>
+    <div id="socialLinks" style="margin: 20px 0;"></div>
+    <p style="margin-top: 20px; color: #666;">We ship within 3-5 business days after payment.</p>
+  </footer>
+
+  <script>
+    let inventory = { products: [], settings: {}, blankProducts: [] };
+    let cart = [];
+    
+    function loadCustomTheme() {
+      const theme = localStorage.getItem('custom_theme');
+      if (theme) {
+        const style = document.createElement('style');
+        style.id = 'customTheme';
+        style.textContent = theme;
+        document.head.appendChild(style);
+      }
+    }
+    loadCustomTheme();
+    
+    function getUserId() {
+      let userId = localStorage.getItem('webstore_userId');
+      if (!userId) {
+        userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('webstore_userId', userId);
+      }
+      return userId;
+    }
+    
+    function trackVisit() {
+      let analytics = JSON.parse(localStorage.getItem('webstore_analytics') || '{"visits":0,"sources":{},"byDate":{}}');
+      const today = new Date().toISOString().split('T')[0];
+      analytics.visits = (analytics.visits || 0) + 1;
+      analytics.byDate = analytics.byDate || {};
+      analytics.byDate[today] = (analytics.byDate[today] || 0) + 1;
+      const ref = document.referrer || 'direct';
+      analytics.sources = analytics.sources || {};
+      analytics.sources[ref] = (analytics.sources[ref] || 0) + 1;
+      localStorage.setItem('webstore_analytics', JSON.stringify(analytics));
+    }
+    
+    function trackProductView(productName) {
+      let analytics = JSON.parse(localStorage.getItem('webstore_analytics') || '{"visits":0,"products":{}}');
+      analytics.products = analytics.products || {};
+      analytics.products[productName] = (analytics.products[productName] || 0) + 1;
+      localStorage.setItem('webstore_analytics', JSON.stringify(analytics));
+    }
+    
+    async function loadInventory() {
+      trackVisit();
+      getUserId();
+      try {
+        const response = await fetch('inventory.json');
+        inventory = await response.json();
+        if (!inventory.blankProducts) inventory.blankProducts = [];
+        renderProducts();
+        renderBlankProducts();
+        renderFilters();
+        updateContactInfo();
+        document.getElementById('venmoUsername').textContent = '@' + (inventory.settings.venmo || 'your-venmo');
+      } catch (e) {
+        document.getElementById('productsGrid').innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#666;">Loading products...</p>';
+      }
+    }
+    
+    function renderProducts() {
+      const grid = document.getElementById('productsGrid');
+      const activeProducts = inventory.products.filter(p => p.active !== false);
+      
+      if (!activeProducts.length && !(inventory.blankProducts || []).length) {
+        grid.innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#666;">No products available.</p>';
+        return;
+      }
+      
+      let html = activeProducts.map(p => {
+        trackProductView(p.name);
+        const savedImages = JSON.parse(localStorage.getItem('webstore_images') || '{}');
+        const imgSrc = savedImages[p.image] || ('images/' + p.image);
+        return `
+          <div class="product-card">
+            <div class="product-image">
+              <img src="${imgSrc}" alt="${p.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\\'color:#666;padding:20px;\\'>${p.name}</span>'">
+            </div>
+            <div class="product-info">
+              <h3 class="product-name">${p.name}</h3>
+              <p class="product-desc">${p.description || ''}</p>
+              <p class="product-price">$${p.price}</p>
+              <button class="add-to-cart" onclick="addToCart(${p.id})">Add to Cart</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      grid.innerHTML = html;
+    }
+    
+    function renderBlankProducts() {
+      const grid = document.getElementById('productsGrid');
+      const blanks = inventory.blankProducts?.filter(p => p.active !== false) || [];
+      
+      if (!blanks.length) return;
+      
+      const blankHtml = blanks.map(p => `
+        <div class="product-card">
+          <div class="product-image" style="background:#1f1f1f;">
+            <span style="color:#666;font-size:3em;">🖼️</span>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">${p.name}</h3>
+            <p class="product-desc">${p.description || 'Choose your own photo to engrave'}</p>
+            <p style="color:#888;font-size:0.8em;margin-bottom:10px;">${p.instructions || 'Email us your photo after ordering'}</p>
+            <div style="margin-bottom:10px;">
+              <label style="font-size:0.85em;color:#888;display:block;margin-bottom:5px;">Select Size:</label>
+              <select id="blankSize_${btoa(p.name).substring(0,8)}" style="width:100%;padding:10px;background:#2a2a2a;border:1px solid #333;color:#fff;border-radius:5px;">
+                <option value="small" data-price="${p.prices?.small || 25}">Small (4x6) - $${p.prices?.small || 25}</option>
+                <option value="medium" data-price="${p.prices?.medium || 45}">Medium (8x10) - $${p.prices?.medium || 45}</option>
+                <option value="large" data-price="${p.prices?.large || 65}">Large (11x14) - $${p.prices?.large || 65}</option>
+              </select>
+            </div>
+            <p class="product-price" id="blankPrice_${btoa(p.name).substring(0,8)}">$${p.prices?.small || 25}</p>
+            <button class="add-to-cart" onclick="addBlankToCart('${p.name}', '${btoa(p.name).substring(0,8)}')">Add to Cart</button>
+          </div>
+        </div>
+      `).join('');
+      
+      grid.innerHTML += blankHtml;
+      
+      blanks.forEach(p => {
+        const select = document.getElementById('blankSize_' + btoa(p.name).substring(0,8));
+        if (select) {
+          select.addEventListener('change', (e) => {
+            const price = e.target.options[e.target.selectedIndex].dataset.price;
+            document.getElementById('blankPrice_' + btoa(p.name).substring(0,8)).textContent = '$' + price;
+          });
+        }
+      });
+    }
+    
+    function renderFilters() {
+      const categories = [...new Set(inventory.products.filter(p => p.active !== false).map(p => p.category).filter(Boolean))];
+      const filterBar = document.getElementById('filterBar');
+      let html = '<button class="filter-btn active" onclick="filterProducts(\'all\')">All</button>';
+      html += categories.map(c => `<button class="filter-btn" onclick="filterProducts('${c}')">${c.charAt(0).toUpperCase() + c.slice(1)}</button>`).join('');
+      if ((inventory.blankProducts || []).length) {
+        html += '<button class="filter-btn" onclick="filterProducts(\'custom\')">Custom/Your Photo</button>';
+      }
+      filterBar.innerHTML = html;
+    }
+    
+    function filterProducts(category) {
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      const active = inventory.products.filter(p => p.active !== false);
+      const blanks = inventory.blankProducts?.filter(p => p.active !== false) || [];
+      let filtered;
+      
+      if (category === 'all') {
+        filtered = active;
+        renderProducts();
+        return;
+      } else if (category === 'custom') {
+        renderBlankProducts();
+        return;
+      } else {
+        filtered = active.filter(p => p.category === category);
+      }
+      
+      renderProductsFiltered(filtered);
+    }
+    
+    function renderProductsFiltered(products) {
+      const grid = document.getElementById('productsGrid');
+      if (!products.length) {
+        grid.innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#666;">No products in this category.</p>';
+        return;
+      }
+      const savedImages = JSON.parse(localStorage.getItem('webstore_images') || '{}');
+      grid.innerHTML = products.map(p => {
+        const imgSrc = savedImages[p.image] || ('images/' + p.image);
+        return `
+          <div class="product-card">
+            <div class="product-image">
+              <img src="${imgSrc}" alt="${p.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\\'color:#666;padding:20px;\\'>${p.name}</span>'">
+            </div>
+            <div class="product-info">
+              <h3 class="product-name">${p.name}</h3>
+              <p class="product-desc">${p.description || ''}</p>
+              <p class="product-price">$${p.price}</p>
+              <button class="add-to-cart" onclick="addToCart(${p.id})">Add to Cart</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function addToCart(id) {
+      const product = inventory.products.find(p => p.id === id);
+      if (!product) return;
+      const existing = cart.find(item => item.id === id);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ ...product, qty: 1 });
+      }
+      updateCartUI();
+    }
+    
+    function addBlankToCart(name, key) {
+      const select = document.getElementById('blankSize_' + key);
+      const size = select.value;
+      const price = parseInt(select.options[select.selectedIndex].dataset.price);
+      const desc = inventory.blankProducts.find(p => btoa(p.name).substring(0,8) === key)?.description || 'Your custom photo';
+      
+      const existing = cart.find(item => item.name === name && item.size === size);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ id: 'blank_' + key + '_' + size, name, description: desc + ' - ' + size, price, qty: 1, size });
+      }
+      updateCartUI();
+    }
+    
+    function updateCartUI() {
+      document.getElementById('cartCount').textContent = cart.reduce((sum, item) => sum + item.qty, 0);
+      const cartItems = document.getElementById('cartItems');
+      if (!cart.length) {
+        cartItems.innerHTML = '<p style="text-align:center;color:#666;padding:30px;">Your cart is empty</p>';
+      } else {
+        cartItems.innerHTML = cart.map(item => `
+          <div class="cart-item">
+            <div class="cart-item-details">
+              <h4 class="cart-item-name">${item.name}</h4>
+              <p class="cart-item-price">${item.description || ''}</p>
+              <p>$${item.price} each</p>
+            </div>
+            <div class="cart-item-qty">
+              <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
+              <span>${item.qty}</span>
+              <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
+            </div>
+            <button class="remove-btn" onclick="removeItem('${item.id}')">Remove</button>
+          </div>
+        `).join('');
+      }
+      document.getElementById('cartTotal').textContent = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    }
+    
+    function updateQty(id, change) {
+      const item = cart.find(i => i.id === id);
+      if (item) {
+        item.qty += change;
+        if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
+      }
+      updateCartUI();
+    }
+    
+    function removeItem(id) {
+      cart = cart.filter(i => i.id !== id);
+      updateCartUI();
+    }
+    
+    function openCart() { document.getElementById('cartModal').style.display = 'block'; document.body.style.overflow = 'hidden'; }
+    function closeCart() { document.getElementById('cartModal').style.display = 'none'; document.body.style.overflow = 'auto'; }
+    
+    function checkout() {
+      if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const venmo = inventory.settings.venmo || 'your-venmo';
+      const blankItems = cart.filter(i => i.id?.startsWith('blank_'));
+      let instructions = '';
+      if (blankItems.length) {
+        instructions = '\n\nFor custom photo orders: Email your photo to ' + (inventory.settings.email || 'the email on the contact page');
+      }
+      alert(`Order placed! Total: $${total}\n\nPlease Venmo $${total} to @${venmo}\n\nInclude your name and address in the Venmo note.\n\nWe will email you to confirm after payment.${instructions}`);
+      cart = [];
+      updateCartUI();
+      closeCart();
+    }
+    
+    function updateContactInfo() {
+      if (inventory.settings) {
+        document.getElementById('contactEmail').textContent = inventory.settings.email || 'contact@example.com';
+        document.getElementById('contactPhone').textContent = inventory.settings.phone || '555-123-4567';
+        
+        const socialDiv = document.getElementById('socialLinks');
+        const s = inventory.settings;
+        let socialHtml = '';
+        const socials = [
+          { key: 'socialFacebook', icon: '📘', label: 'Facebook' },
+          { key: 'socialInstagram', icon: '📸', label: 'Instagram' },
+          { key: 'socialTwitter', icon: '𝕏', label: 'X' },
+          { key: 'socialYoutube', icon: '▶️', label: 'YouTube' },
+          { key: 'socialTiktok', icon: '🎵', label: 'TikTok' }
+        ];
+        socials.forEach(social => {
+          if (s[social.key]) {
+            socialHtml += `<a href="${s[social.key]}" target="_blank" style="color:#fff;margin:0 10px;font-size:1.5em;">${social.icon}</a>`;
+          }
+        });
+        socialDiv.innerHTML = socialHtml;
+      }
+    }
+    
+    loadInventory();
+  </script>
+</body>
+</html>
