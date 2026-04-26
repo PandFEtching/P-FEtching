@@ -1,0 +1,18 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Cross with wings",
+      "description": "3inch x 3inch",
+      "price": 9,
+      "cost": 0,
+      "image": "cross-with-wings.svg",
+      "category": "coasters",
+      "supplier": "P&F Etching",
+      "stock": 1,
+      "active": true
+    }
+  ],
+  "settings": {},
+  "blankProducts": []
+}
