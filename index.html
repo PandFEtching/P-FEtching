@@ -103,13 +103,23 @@
       </div>
       <div id="cartItems"></div>
       <div class="cart-total">Total: $<span id="cartTotal">0</span></div>
+      
+      <div id="shippingForm" style="background:#2a2a2a;padding:20px;border-radius:10px;margin-bottom:20px;border-left:4px solid #cc0000;">
+        <h3 style="color:#cc0000;margin-bottom:15px;">Shipping Details</h3>
+        <div style="margin-bottom:10px;">
+          <input type="text" id="custName" placeholder="Full Name *" style="width:100%;padding:10px;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:5px;margin-bottom:10px;">
+          <textarea id="custAddress" placeholder="Full Shipping Address *" rows="3" style="width:100%;padding:10px;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:5px;margin-bottom:10px;"></textarea>
+          <input type="email" id="custEmail" placeholder="Email Address *" style="width:100%;padding:10px;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:5px;">
+        </div>
+      </div>
+
       <div class="checkout-info" id="checkoutInfo">
         <h3>How to Pay</h3>
-        <p>Send via Venmo: <strong id="venmoUsername">@your-venmo</strong></p>
-        <p>Include your name and address in the note.</p>
+        <p>Send via PayPal: <strong id="paypalEmailDisplay">your-paypal@email.com</strong></p>
+        <p>Include your name in the payment note.</p>
         <p>We'll email you to confirm after payment.</p>
       </div>
-      <button class="checkout-btn" onclick="checkout()">Complete Order</button>
+      <button class="checkout-btn" onclick="checkout()">Complete Order & Send Info</button>
     </div>
   </div>
   
@@ -175,7 +185,7 @@
         renderBlankProducts();
         renderFilters();
         updateContactInfo();
-        document.getElementById('venmoUsername').textContent = '@' + (inventory.settings.venmo || 'your-venmo');
+        document.getElementById('paypalEmailDisplay').textContent = inventory.settings.paypal || 'your-paypal@email.com';
       } catch (e) {
         document.getElementById('productsGrid').innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#666;">Loading products...</p>';
       }
@@ -192,10 +202,11 @@
       
       let html = activeProducts.map(p => {
         trackProductView(p.name);
+        const imgPath = p.image?.startsWith('http') || p.image?.startsWith('images/') ? p.image : 'images/' + p.image;
         return `
           <div class="product-card">
             <div class="product-image">
-              <img src="images/${p.image}" alt="${p.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\\'color:#666;padding:20px;\\'>${p.name}</span>'">
+              <img src="${imgPath}" alt="${p.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\\'color:#666;padding:20px;\\'>${p.name}</span>'">
             </div>
             <div class="product-info">
               <h3 class="product-name">${p.name}</h3>
@@ -225,31 +236,13 @@
             <h3 class="product-name">${p.name}</h3>
             <p class="product-desc">${p.description || 'Choose your own photo to engrave'}</p>
             <p style="color:#888;font-size:0.8em;margin-bottom:10px;">${p.instructions || 'Email us your photo after ordering'}</p>
-            <div style="margin-bottom:10px;">
-              <label style="font-size:0.85em;color:#888;display:block;margin-bottom:5px;">Select Size:</label>
-              <select id="blankSize_${btoa(p.name).substring(0,8)}" style="width:100%;padding:10px;background:#2a2a2a;border:1px solid #333;color:#fff;border-radius:5px;">
-                <option value="small" data-price="${p.prices?.small || 25}">Small (4x6) - $${p.prices?.small || 25}</option>
-                <option value="medium" data-price="${p.prices?.medium || 45}">Medium (8x10) - $${p.prices?.medium || 45}</option>
-                <option value="large" data-price="${p.prices?.large || 65}">Large (11x14) - $${p.prices?.large || 65}</option>
-              </select>
-            </div>
-            <p class="product-price" id="blankPrice_${btoa(p.name).substring(0,8)}">$${p.prices?.small || 25}</p>
+            <p class="product-price">$${p.price || 25}</p>
             <button class="add-to-cart" onclick="addBlankToCart('${p.name}', '${btoa(p.name).substring(0,8)}')">Add to Cart</button>
           </div>
         </div>
       `).join('');
       
       grid.innerHTML += blankHtml;
-      
-      blanks.forEach(p => {
-        const select = document.getElementById('blankSize_' + btoa(p.name).substring(0,8));
-        if (select) {
-          select.addEventListener('change', (e) => {
-            const price = e.target.options[e.target.selectedIndex].dataset.price;
-            document.getElementById('blankPrice_' + btoa(p.name).substring(0,8)).textContent = '$' + price;
-          });
-        }
-      });
     }
     
     function renderFilters() {
@@ -274,8 +267,10 @@
       if (category === 'all') {
         filtered = active;
         renderProducts();
+        renderBlankProducts();
         return;
       } else if (category === 'custom') {
+        grid.innerHTML = '';
         renderBlankProducts();
         return;
       } else {
@@ -291,10 +286,12 @@
         grid.innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#666;">No products in this category.</p>';
         return;
       }
-      grid.innerHTML = products.map(p => `
+      grid.innerHTML = products.map(p => {
+        const imgPath = p.image?.startsWith('http') || p.image?.startsWith('images/') ? p.image : 'images/' + p.image;
+        return `
         <div class="product-card">
           <div class="product-image">
-            <img src="images/${p.image}" alt="${p.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\\'color:#666;padding:20px;\\'>${p.name}</span>'">
+            <img src="${imgPath}" alt="${p.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\\'color:#666;padding:20px;\\'>${p.name}</span>'">
           </div>
           <div class="product-info">
             <h3 class="product-name">${p.name}</h3>
@@ -303,7 +300,7 @@
             <button class="add-to-cart" onclick="addToCart(${p.id})">Add to Cart</button>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
     
     function addToCart(id) {
@@ -319,16 +316,17 @@
     }
     
     function addBlankToCart(name, key) {
-      const select = document.getElementById('blankSize_' + key);
-      const size = select.value;
-      const price = parseInt(select.options[select.selectedIndex].dataset.price);
-      const desc = inventory.blankProducts.find(p => btoa(p.name).substring(0,8) === key)?.description || 'Your custom photo';
+      const product = inventory.blankProducts.find(p => btoa(p.name).substring(0,8) === key);
+      if (!product) return;
       
-      const existing = cart.find(item => item.name === name && item.size === size);
+      const price = product.price || 25;
+      const desc = product.description || 'Your custom photo';
+      
+      const existing = cart.find(item => item.name === name);
       if (existing) {
         existing.qty++;
       } else {
-        cart.push({ id: 'blank_' + key + '_' + size, name, description: desc + ' - ' + size, price, qty: 1, size });
+        cart.push({ id: 'blank_' + key, name, description: desc, price, qty: 1 });
       }
       updateCartUI();
     }
@@ -380,17 +378,55 @@
         alert('Your cart is empty!');
         return;
       }
+      
+      const name = document.getElementById('custName').value.trim();
+      const address = document.getElementById('custAddress').value.trim();
+      const email = document.getElementById('custEmail').value.trim();
+      
+      if (!name || !address || !email) {
+        alert('Please fill in all shipping details!');
+        return;
+      }
+
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      const venmo = inventory.settings.venmo || 'your-venmo';
-      const blankItems = cart.filter(i => i.id?.startsWith('blank_'));
+      const paypal = inventory.settings.paypal || 'your-paypal@email.com';
+      const sellerEmail = inventory.settings.email || paypal;
+      
+      // Build the email body
+      let itemsList = cart.map(item => `- ${item.name} (${item.qty}x) - $${item.price * item.qty}`).join('\n');
+      const blankItems = cart.filter(i => i.id?.toString().startsWith('blank_'));
       let instructions = '';
       if (blankItems.length) {
-        instructions = '\n\nFor custom photo orders: Email your photo to ' + (inventory.settings.email || 'the email on the contact page');
+        instructions = '\n\nNote: I will email the custom photo for the blank items separately.';
       }
-      alert(`Order placed! Total: $${total}\n\nPlease Venmo $${total} to @${venmo}\n\nInclude your name and address in the Venmo note.\n\nWe will email you to confirm after payment.${instructions}`);
+
+      const emailBody = `NEW ORDER - P&F Etching\n` +
+                        `--------------------------\n` +
+                        `CUSTOMER INFO:\n` +
+                        `Name: ${name}\n` +
+                        `Address: ${address}\n` +
+                        `Email: ${email}\n\n` +
+                        `ORDER DETAILS:\n` +
+                        `${itemsList}\n\n` +
+                        `TOTAL: $${total}\n` +
+                        `--------------------------\n` +
+                        `I am sending payment of $${total} to your PayPal: ${paypal}${instructions}`;
+
+      // Open email client
+      const mailtoUrl = `mailto:${sellerEmail}?subject=New Store Order - ${name}&body=${encodeURIComponent(emailBody)}`;
+      
+      alert(`Order details captured!\n\nNext steps:\n1. Click OK to open your email app and send us your shipping info.\n2. Then, send $${total} to ${paypal} via PayPal.\n\nWe will ship your items once payment is confirmed.`);
+      
+      window.location.href = mailtoUrl;
+      
       cart = [];
       updateCartUI();
       closeCart();
+      
+      // Clear form
+      document.getElementById('custName').value = '';
+      document.getElementById('custAddress').value = '';
+      document.getElementById('custEmail').value = '';
     }
     
     function updateContactInfo() {

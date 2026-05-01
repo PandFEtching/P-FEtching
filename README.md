@@ -14,7 +14,6 @@ A complete, self-contained web store that runs on GitHub Pages. No server needed
 Run these commands in your terminal:
 
 ```bash
-cd C:\Users\lexan\Documents\webstore
 git init
 git add .
 git commit -m "Initial store setup"
@@ -62,10 +61,10 @@ Edit `inventory.json`:
     {
       "id": 1,
       "name": "Your Product Name",
-      "description": "Size, material, etc",
+      "description": "Size: 4x6, material, etc",
       "price": 25,
       "cost": 10,
-      "image": "your-product.jpg",
+      "image": "images/your-product.jpg",
       "category": "coasters",
       "supplier": "Your Supplier",
       "stock": 999,
@@ -75,7 +74,7 @@ Edit `inventory.json`:
   "settings": {
     "storename": "Your Store Name",
     "tagline": "Your Tagline",
-    "venmo": "your-venmo-username",
+    "paypal": "your-paypal@email.com",
     "email": "your@email.com",
     "phone": "555-123-4567"
   },
@@ -88,8 +87,8 @@ Edit `inventory.json`:
 ## Adding Product Images
 
 1. Put images in the `images/` folder
-2. Reference them in `inventory.json` (without `images/` prefix):
-   - `"image": "tumbleweed.jpg"` loads `images/tumbleweed.jpg`
+2. Reference them in the Admin Panel by selecting the file or typing the path:
+   - `"image": "images/tumbleweed.jpg"` loads `images/tumbleweed.jpg`
 3. Commit and push to GitHub
 
 **Tip:** Use small file sizes (<500KB) for faster loading.
@@ -115,10 +114,9 @@ Changes go live in ~2 minutes.
 - **Storefront** (`index.html`) - Customer shopping view
 - **Admin Panel** (`admin.html`) - Manage products, settings
 - **Inventory** (`inventory.json`) - Product database
-- **Cart** - Venmo checkout flow
+- **Cart** - PayPal checkout flow
 - **Categories** - Filter products
-- **Blank Products** - Let customers upload custom photos
-- **AI Tools** - Generate themes and descriptions (needs OpenRouter API key)
+- **Blank Products** - Let customers order custom items (put sizes in description)
 - **Cloud Sync** - Access inventory from any device
 - **Analytics** - Track visits and popular products
 
@@ -132,7 +130,6 @@ Edit `inventory.json` settings:
 "settings": {
   "storename": "Your Brand",
   "tagline": "What you sell",
-  "venmo": "@your-venmo",
   "paypal": "your-paypal@email.com",
   "email": "contact@yourdomain.com",
   "phone": "555-123-4567",
@@ -169,8 +166,8 @@ Edit `inventory.json` settings:
 
 ```
 webstore/
-├── index.html          (Customer store - don't edit)
-├── admin.html         (Admin panel - don't edit)
+├── index.html          (Customer store)
+├── admin.html         (Admin panel)
 ├── inventory.json     (YOUR product database - edit this)
 ├── images/            (Product images go here)
 │   └── cross-with-wings.svg

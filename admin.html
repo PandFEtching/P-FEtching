@@ -197,8 +197,8 @@
     
     <div class="tabs">
       <button class="tab active" onclick="showTab('products')">Products</button>
+      <button class="tab" onclick="showTab('orders')">Orders</button>
       <button class="tab" onclick="showTab('blank')">Blank Items</button>
-      <button class="tab" onclick="showTab('ai')">🤖 AI Tools</button>
       <button class="tab" onclick="showTab('analytics')">Analytics</button>
       <button class="tab" onclick="showTab('settings')">Settings</button>
     </div>
@@ -229,7 +229,7 @@
             <input type="text" id="productName" placeholder="e.g., Tumbleweed Art">
           </div>
           <div class="form-group">
-            <label>Description</label>
+            <label>Description (include size here)</label>
             <input type="text" id="productDesc" placeholder="e.g., Small (4x6) - Desert tumbleweed art">
           </div>
         </div>
@@ -245,8 +245,13 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Image Filename</label>
-            <input type="text" id="productImage" placeholder="e.g., tumbleweed.jpg">
+            <label>Image Path/Filename</label>
+            <div style="display:flex;gap:5px;">
+              <input type="text" id="productImage" placeholder="e.g., images/tumbleweed.jpg" style="flex:1;">
+              <button class="btn btn-sm btn-secondary" onclick="document.getElementById('imagePicker').click()">Select</button>
+            </div>
+            <input type="file" id="imagePicker" style="display:none;" onchange="updateImagePath(event)">
+            <p style="font-size:0.8em;color:#666;margin-top:5px;">Note: You must still manually move the file to your images/ folder.</p>
           </div>
           <div class="form-group">
             <label>Category</label>
@@ -307,29 +312,21 @@
               <input type="text" id="blankName" placeholder="e.g., Custom Photo Print">
             </div>
             <div class="form-group">
-              <label>Description</label>
-              <input type="text" id="blankDesc" placeholder="e.g., Your photo on wood - choose your size">
+              <label>Description (put sizes and info here)</label>
+              <input type="text" id="blankDesc" placeholder="e.g., Your photo on wood - sizes: 4x6, 8x10, etc">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Small (4x6) Price ($)</label>
-              <input type="number" id="blankPriceSmall" placeholder="25">
+              <label>Price ($) *</label>
+              <input type="number" id="blankPrice" placeholder="25">
             </div>
-            <div class="form-group">
-              <label>Medium (8x10) Price ($)</label>
-              <input type="number" id="blankPriceMedium" placeholder="45">
-            </div>
-            <div class="form-group">
-              <label>Large (11x14) Price ($)</label>
-              <input type="number" id="blankPriceLarge" placeholder="65">
-            </div>
-          </div>
-          <div class="form-row">
             <div class="form-group">
               <label>Category</label>
               <input type="text" id="blankCategory" placeholder="custom" value="custom">
             </div>
+          </div>
+          <div class="form-row">
             <div class="form-group">
               <label>Upload Instructions (shown to customer)</label>
               <input type="text" id="blankInstructions" placeholder="e.g., Email your photo after ordering">
@@ -344,7 +341,7 @@
             <tr>
               <th>Name</th>
               <th>Description</th>
-              <th>Sizes</th>
+              <th>Price</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -353,67 +350,64 @@
       </div>
     </div>
     
-    <div id="aiTab" style="display:none;">
+    <div id="ordersTab" style="display:none;">
       <div class="panel">
-        <h2>🤖 AI Theme & Design Assistant</h2>
-        <p style="color:#888;margin-bottom:20px;">Use AI to change your store theme or enhance product images.</p>
-        
-        <div class="form-group" style="margin-bottom:20px;">
-          <label style="color:#fff;font-size:1.1em;margin-bottom:10px;display:block;">OpenRouter API Key (free)</label>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <input type="password" id="aiApiKey" placeholder="sk-or-v1-..." style="flex:1;min-width:200px;padding:12px;background:#2a2a2a;border:1px solid #333;color:#fff;border-radius:5px;">
-            <button class="btn btn-secondary" onclick="testAiKey()">Test Key</button>
-          </div>
-          <p style="color:#666;font-size:0.85em;margin-top:8px;">Get a free key at <a href="https://openrouter.ai/keys" target="_blank" style="color:#cc0000;">openrouter.ai/keys</a></p>
+        <div class="panel-header">
+          <h2>Order Management</h2>
+          <button class="btn" onclick="showOrderForm()">+ Record New Order</button>
         </div>
         
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
-          <div style="background:#2a2a2a;padding:20px;border-radius:10px;">
-            <h3 style="color:#cc0000;margin-bottom:15px;">🎨 Change Theme</h3>
+        <div class="edit-form" id="orderForm">
+          <h3>Record Order (from Email)</h3>
+          <div class="form-row">
             <div class="form-group">
-              <label>Describe your theme:</label>
-              <textarea id="themePrompt" rows="3" placeholder="e.g., Make it warm desert sunset colors, or modern minimalist black and white" style="width:100%;padding:12px;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:5px;"></textarea>
+              <label>Customer Name</label>
+              <input type="text" id="orderCustName" placeholder="John Doe">
             </div>
-            <button class="btn" onclick="generateTheme()">Generate Theme CSS</button>
-            <button class="btn btn-secondary" onclick="previewTheme()" style="margin-left:10px;">Preview</button>
+            <div class="form-group">
+              <label>Customer Email</label>
+              <input type="email" id="orderCustEmail" placeholder="john@example.com">
+            </div>
           </div>
-          
-          <div style="background:#2a2a2a;padding:20px;border-radius:10px;">
-            <h3 style="color:#cc0000;margin-bottom:15px;">🖼️ Enhance Product Photo</h3>
-            <p style="color:#888;font-size:0.9em;margin-bottom:15px;">AI removes background and adds a clean look - makes products pop!</p>
-            <div id="aiImagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;"></div>
-            <div style="display:flex;gap:10px;">
-              <button class="btn" onclick="document.getElementById('aiImageInput').click()">📷 Select Photo</button>
-              <button class="btn btn-success" id="enhanceBtn" onclick="enhanceImage()" disabled>✨ Enhance (Remove BG)</button>
-              <button class="btn btn-secondary" onclick="clearAiImage()">Clear</button>
+          <div class="form-group">
+            <label>Shipping Address</label>
+            <textarea id="orderCustAddress" rows="2" placeholder="123 Main St, City, State, Zip"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Items Ordered</label>
+              <textarea id="orderItems" rows="2" placeholder="e.g., Tumbleweed Art (1x), Coasters (2x)"></textarea>
             </div>
-            <input type="file" id="aiImageInput" accept="image/*" style="display:none;" onchange="loadAiImage(event)">
+            <div class="form-group">
+              <label>Total Price ($)</label>
+              <input type="number" id="orderTotal" placeholder="50.00">
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn" onclick="saveOrder()">Record Order</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('orderForm').classList.remove('show')">Cancel</button>
           </div>
         </div>
-        
-        <div id="aiOutput" style="margin-top:20px;"></div>
-      </div>
-      
-      <div class="panel">
-        <h3 style="color:#cc0000;margin-bottom:15px;">📝 AI Product Description</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-          <div>
-            <div class="form-group">
-              <label>Product name:</label>
-              <input type="text" id="aiProdName" placeholder="e.g., Tumbleweed Art" style="width:100%;padding:12px;background:#2a2a2a;border:1px solid #333;color:#fff;border-radius:5px;margin-bottom:10px;">
-            </div>
-            <div class="form-group">
-              <label>Key features (comma separated):</label>
-              <input type="text" id="aiProdFeatures" placeholder="e.g., desert, rustic, wooden, handcrafted" style="width:100%;padding:12px;background:#2a2a2a;border:1px solid #333;color:#fff;border-radius:5px;margin-bottom:10px;">
-            </div>
-            <button class="btn" onclick="generateDescription()">Generate Description</button>
-          </div>
-          <div>
-            <label style="color:#888;display:block;margin-bottom:5px;">Generated:</label>
-            <div id="aiDescriptionOutput" style="background:#2a2a2a;padding:15px;border-radius:5px;min-height:100px;color:#fff;white-space:pre-wrap;"></div>
-            <button class="btn btn-sm btn-secondary" onclick="copyDescription()" style="margin-top:10px;">Copy</button>
-          </div>
+
+        <div class="tabs" style="margin-top:20px;background:#2a2a2a;padding:5px;border-radius:5px;">
+          <button class="tab active" style="padding:5px 15px;font-size:0.8em;" onclick="filterOrders('pending')">Pending</button>
+          <button class="tab" style="padding:5px 15px;font-size:0.8em;" onclick="filterOrders('shipped')">Shipped</button>
+          <button class="tab" style="padding:5px 15px;font-size:0.8em;" onclick="filterOrders('archived')">Archived (Tax)</button>
         </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Tracking</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTable"></tbody>
+        </table>
       </div>
     </div>
     
@@ -488,10 +482,6 @@
         <div class="panel">
           <h2>Payment Info</h2>
           <div class="form-group">
-            <label>Venmo Username</label>
-            <input type="text" id="venmoUsername" placeholder="your-venmo-username">
-          </div>
-          <div class="form-group">
             <label>PayPal Email</label>
             <input type="email" id="paypalEmail" placeholder="your-paypal@email.com">
           </div>
@@ -552,7 +542,7 @@
   <input type="file" id="inventoryFile" accept=".json" style="display: none;" onchange="loadInventoryFile(event)">
   
   <script>
-    let inventory = { products: [], settings: {}, blankProducts: [] };
+    let inventory = { products: [], settings: {}, blankProducts: [], orders: [] };
     let analytics = { visits: 0, sources: {}, products: {}, history: [], byDate: {} };
     let cameraStream = null;
     let capturedPhotos = [];
@@ -570,10 +560,11 @@
         .then(data => {
           inventory = data;
           if (!inventory.blankProducts) inventory.blankProducts = [];
+          if (!inventory.orders) inventory.orders = [];
           renderAll();
         })
         .catch(() => {
-          inventory = { products: [], settings: {}, blankProducts: [] };
+          inventory = { products: [], settings: {}, blankProducts: [], orders: [] };
           renderAll();
         });
       
@@ -647,10 +638,11 @@
       const tbody = document.getElementById('productsTable');
       tbody.innerHTML = inventory.products.map(p => {
         const profit = p.cost ? (p.price - p.cost).toFixed(2) : '-';
+        const imgPath = p.image?.startsWith('http') || p.image?.startsWith('images/') ? p.image : 'images/' + p.image;
         return `
           <tr>
             <td>${p.id}</td>
-            <td><img src="images/${p.image}" style="width:50px;height:50px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'"></td>
+            <td><img src="${imgPath}" style="width:50px;height:50px;object-fit:cover;border-radius:5px;" onerror="this.style.display='none'"></td>
             <td><strong>${p.name}</strong></td>
             <td>${p.description || '-'}</td>
             <td><strong style="color:#cc0000">$${p.price}</strong></td>
@@ -673,7 +665,7 @@
         <tr>
           <td><strong>${p.name}</strong></td>
           <td>${p.description || '-'}</td>
-          <td>Small: $${p.prices?.small || '-'} | Med: $${p.prices?.medium || '-'} | Large: $${p.prices?.large || '-'}</td>
+          <td>$${p.price || '-'}</td>
           <td class="actions">
             <button class="btn btn-sm" style="background:#8b0000" onclick="deleteBlankProduct(${idx})">Delete</button>
           </td>
@@ -685,7 +677,6 @@
       const s = inventory.settings || {};
       document.getElementById('storeName').value = s.storename || '';
       document.getElementById('storeTagline').value = s.tagline || '';
-      document.getElementById('venmoUsername').value = s.venmo || '';
       document.getElementById('paypalEmail').value = s.paypal || '';
       document.getElementById('contactEmail').value = s.email || '';
       document.getElementById('contactPhone').value = s.phone || '';
@@ -769,29 +760,23 @@
       const desc = document.getElementById('blankDesc').value.trim();
       const category = document.getElementById('blankCategory').value.trim() || 'custom';
       const instructions = document.getElementById('blankInstructions').value.trim();
+      const price = parseFloat(document.getElementById('blankPrice').value) || 0;
       
-      if (!name) {
-        showMessage('Name is required!', 'error');
+      if (!name || !price) {
+        showMessage('Name and price are required!', 'error');
         return;
       }
-      
-      const small = parseFloat(document.getElementById('blankPriceSmall').value) || 25;
-      const medium = parseFloat(document.getElementById('blankPriceMedium').value) || 45;
-      const large = parseFloat(document.getElementById('blankPriceLarge').value) || 65;
       
       if (!inventory.blankProducts) inventory.blankProducts = [];
       
       inventory.blankProducts.push({
-        name, description: desc, category, instructions,
-        prices: { small, medium, large },
+        name, description: desc, category, instructions, price,
         isBlank: true, active: true
       });
       
       document.getElementById('blankName').value = '';
       document.getElementById('blankDesc').value = '';
-      document.getElementById('blankPriceSmall').value = '';
-      document.getElementById('blankPriceMedium').value = '';
-      document.getElementById('blankPriceLarge').value = '';
+      document.getElementById('blankPrice').value = '';
       
       renderBlankProducts();
       downloadInventory();
@@ -847,7 +832,6 @@
         ...inventory.settings,
         storename: document.getElementById('storeName').value,
         tagline: document.getElementById('storeTagline').value,
-        venmo: document.getElementById('venmoUsername').value,
         paypal: document.getElementById('paypalEmail').value,
         email: document.getElementById('contactEmail').value,
         phone: document.getElementById('contactPhone').value,
@@ -861,6 +845,14 @@
       };
       downloadInventory();
       showMessage('Settings saved! JSON downloaded.', 'success');
+    }
+    
+    function updateImagePath(event) {
+      const file = event.target.files[0];
+      if (file) {
+        // Set to images/filename by default as requested
+        document.getElementById('productImage').value = 'images/' + file.name;
+      }
     }
     
     function downloadInventory() {
@@ -901,13 +893,125 @@
     
     function showTab(tab) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
+      const activeTab = Array.from(document.querySelectorAll('.tab')).find(t => t.textContent.toLowerCase().includes(tab));
+      if (activeTab) activeTab.classList.add('active');
+      
       document.getElementById('productsTab').style.display = tab === 'products' ? 'block' : 'none';
+      document.getElementById('ordersTab').style.display = tab === 'orders' ? 'block' : 'none';
       document.getElementById('blankTab').style.display = tab === 'blank' ? 'block' : 'none';
-      document.getElementById('aiTab').style.display = tab === 'ai' ? 'block' : 'none';
       document.getElementById('analyticsTab').style.display = tab === 'analytics' ? 'block' : 'none';
       document.getElementById('settingsTab').style.display = tab === 'settings' ? 'block' : 'none';
-      if (tab === 'ai') loadAiSettings();
+    }
+
+    function renderOrders(statusFilter = 'pending') {
+      const tbody = document.getElementById('ordersTable');
+      const filtered = (inventory.orders || []).filter(o => {
+        if (statusFilter === 'archived') return o.status === 'archived';
+        if (statusFilter === 'shipped') return o.status === 'shipped';
+        return !o.status || o.status === 'pending';
+      });
+
+      tbody.innerHTML = filtered.map((o, idx) => `
+        <tr>
+          <td>${new Date(o.date).toLocaleDateString()}</td>
+          <td><strong>${o.name}</strong><br><small style="color:#888">${o.email}</small></td>
+          <td>${o.items}</td>
+          <td style="color:#28a745;font-weight:bold">$${o.total}</td>
+          <td>${o.tracking || '<span style="color:#666">None</span>'}</td>
+          <td class="actions">
+            ${o.status !== 'shipped' && o.status !== 'archived' ? `<button class="btn btn-sm btn-success" onclick="markShipped(${o.id})">Ship</button>` : ''}
+            ${o.status === 'shipped' ? `<button class="btn btn-sm btn-secondary" onclick="archiveOrder(${o.id})">Archive</button>` : ''}
+            <button class="btn btn-sm btn-secondary" onclick="editOrderTracking(${o.id})">Track #</button>
+            <button class="btn btn-sm" style="background:#8b0000" onclick="deleteOrder(${o.id})">Delete</button>
+          </td>
+        </tr>
+      `).join('') || `<tr><td colspan="6" style="text-align:center;color:#666;">No ${statusFilter} orders found.</td></tr>`;
+    }
+
+    function showOrderForm() {
+      document.getElementById('orderForm').classList.add('show');
+    }
+
+    function saveOrder() {
+      const order = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        name: document.getElementById('orderCustName').value.trim(),
+        email: document.getElementById('orderCustEmail').value.trim(),
+        address: document.getElementById('orderCustAddress').value.trim(),
+        items: document.getElementById('orderItems').value.trim(),
+        total: parseFloat(document.getElementById('orderTotal').value) || 0,
+        status: 'pending',
+        tracking: ''
+      };
+
+      if (!order.name || !order.total) {
+        showMessage('Name and total are required!', 'error');
+        return;
+      }
+
+      if (!inventory.orders) inventory.orders = [];
+      inventory.orders.push(order);
+      renderOrders();
+      downloadInventory();
+      document.getElementById('orderForm').classList.remove('show');
+      showMessage('Order recorded!', 'success');
+      
+      // Clear form
+      document.getElementById('orderCustName').value = '';
+      document.getElementById('orderCustEmail').value = '';
+      document.getElementById('orderCustAddress').value = '';
+      document.getElementById('orderItems').value = '';
+      document.getElementById('orderTotal').value = '';
+    }
+
+    function markShipped(id) {
+      const order = inventory.orders.find(o => o.id === id);
+      if (order) {
+        const tracking = prompt("Enter Tracking Number (optional):", order.tracking);
+        order.tracking = tracking || '';
+        order.status = 'shipped';
+        renderOrders('shipped');
+        downloadInventory();
+        showMessage('Order marked as shipped!', 'success');
+      }
+    }
+
+    function archiveOrder(id) {
+      const order = inventory.orders.find(o => o.id === id);
+      if (order) {
+        order.status = 'archived';
+        renderOrders('archived');
+        downloadInventory();
+        showMessage('Order archived for tax records', 'success');
+      }
+    }
+
+    function editOrderTracking(id) {
+      const order = inventory.orders.find(o => o.id === id);
+      if (order) {
+        const tracking = prompt("Update Tracking Number:", order.tracking);
+        if (tracking !== null) {
+          order.tracking = tracking;
+          renderOrders(order.status);
+          downloadInventory();
+        }
+      }
+    }
+
+    function deleteOrder(id) {
+      if (confirm('Delete this order record? This cannot be undone.')) {
+        inventory.orders = inventory.orders.filter(o => o.id !== id);
+        renderOrders();
+        downloadInventory();
+      }
+    }
+
+    function filterOrders(status) {
+      const tabs = event.target.parentElement.querySelectorAll('.tab');
+      tabs.forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      renderOrders(status);
     }
     
     function showMessage(msg, type) {
@@ -1147,292 +1251,10 @@
       }
     }
     
-    let aiImageData = null;
-    
-    function loadAiSettings() {
-      document.getElementById('aiApiKey').value = localStorage.getItem('ai_api_key') || '';
-    }
-    
-    async function testAiKey() {
-      const key = document.getElementById('aiApiKey').value.trim();
-      if (!key) {
-        showMessage('Enter an API key first', 'error');
-        return;
-      }
-      try {
-        const res = await fetch('https://openrouter.ai/api/v1/auth/keys', {
-          headers: { 'Authorization': 'Bearer ' + key }
-        });
-        if (res.ok) {
-          localStorage.setItem('ai_api_key', key);
-          showMessage('API key saved!', 'success');
-        } else {
-          showMessage('Invalid API key', 'error');
-        }
-      } catch (e) {
-        showMessage('Error testing key', 'error');
-      }
-    }
-    
-    async function generateTheme() {
-      const key = localStorage.getItem('ai_api_key');
-      const prompt = document.getElementById('themePrompt').value;
-      
-      if (!key) {
-        showMessage('Enter an API key first', 'error');
-        return;
-      }
-      if (!prompt) {
-        showMessage('Enter a theme description', 'error');
-        return;
-      }
-      
-      const btn = event.target;
-      btn.disabled = true;
-      btn.textContent = 'Generating...';
-      
-      const systemPrompt = `You are a CSS expert. Generate a complete CSS stylesheet for an e-commerce store. 
-Output ONLY valid CSS that replaces the body styles, header, colors, and general theme.
-Current store is for desert-themed laser engraved art (tumbleweeds, horse skulls, etc).
-Theme requested: ${prompt}
-
-Output just CSS rules for:
-- body background and font
-- header background gradient (use colors from the theme)
-- button colors
-- product card styling
-- footer styling
-
-Use modern CSS with flexbox/grid. Keep it dark theme friendly. Output ONLY CSS, no explanations.`;
-      
-      try {
-        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + key,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': window.location.href,
-            'X-Title': 'WebStore Admin'
-          },
-          body: JSON.stringify({
-            model: 'meta-llama/llama-3.1-8b-instruct',
-            messages: [{ role: 'user', content: systemPrompt }],
-            max_tokens: 1500
-          })
-        });
-        
-        const data = await res.json();
-        const css = data.choices?.[0]?.message?.content || '';
-        
-        const output = document.getElementById('aiOutput');
-        output.innerHTML = `
-          <div style="background:#2a2a2a;padding:20px;border-radius:10px;margin-top:20px;">
-            <h4 style="color:#cc0000;margin-bottom:10px;">Generated Theme CSS:</h4>
-            <textarea id="generatedCss" style="width:100%;height:200px;background:#1a1a1a;border:1px solid #333;color:#0f0;font-family:monospace;padding:10px;border-radius:5px;">${css}</textarea>
-            <div style="margin-top:15px;display:flex;gap:10px;">
-              <button class="btn" onclick="applyTheme()">Apply Theme</button>
-              <button class="btn btn-secondary" onclick="downloadTheme()">Download CSS</button>
-            </div>
-          </div>
-        `;
-        showMessage('Theme generated!', 'success');
-      } catch (e) {
-        showMessage('Error generating theme', 'error');
-      }
-      
-      btn.disabled = false;
-      btn.textContent = 'Generate Theme CSS';
-    }
-    
-    function applyTheme() {
-      const css = document.getElementById('generatedCss').value;
-      localStorage.setItem('custom_theme', css);
-      showMessage('Theme applied! Preview to see changes.', 'success');
-    }
-    
-    function previewTheme() {
-      const css = localStorage.getItem('custom_theme');
-      if (!css) {
-        showMessage('Generate a theme first', 'error');
-        return;
-      }
-      const style = document.getElementById('previewStyle') || document.createElement('style');
-      style.id = 'previewStyle';
-      style.textContent = css;
-      document.head.appendChild(style);
-      showMessage('Preview applied!', 'success');
-    }
-    
-    function downloadTheme() {
-      const css = document.getElementById('generatedCss').value;
-      const blob = new Blob([css], { type: 'text/css' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'theme.css';
-      a.click();
-    }
-    
-    function loadAiImage(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        aiImageData = ev.target.result;
-        document.getElementById('aiImagePreview').innerHTML = `
-          <div style="position:relative;">
-            <img src="${aiImageData}" style="max-width:200px;border-radius:10px;">
-            <button onclick="clearAiImage()" style="position:absolute;top:-10px;right:-10px;background:#cc0000;color:#fff;border:none;border-radius:50%;width:25px;height:25px;cursor:pointer;">×</button>
-          </div>
-        `;
-        document.getElementById('enhanceBtn').disabled = false;
-      };
-      reader.readAsDataURL(file);
-    }
-    
-    function clearAiImage() {
-      aiImageData = null;
-      document.getElementById('aiImagePreview').innerHTML = '';
-      document.getElementById('enhanceBtn').disabled = true;
-      document.getElementById('aiImageInput').value = '';
-    }
-    
-    async function enhanceImage() {
-      const key = localStorage.getItem('ai_api_key');
-      if (!key) {
-        showMessage('Enter an API key first', 'error');
-        return;
-      }
-      if (!aiImageData) {
-        showMessage('Select an image first', 'error');
-        return;
-      }
-      
-      const btn = document.getElementById('enhanceBtn');
-      btn.disabled = true;
-      btn.textContent = 'Processing...';
-      
-      const base64Data = aiImageData.split(',')[1];
-      
-      try {
-        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + key,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': window.location.href,
-            'X-Title': 'WebStore Admin'
-          },
-          body: JSON.stringify({
-            model: 'qwen/qwen2-vl-72b-instruct',
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'text', text: 'Remove the background from this product photo to make it transparent/white. Make the subject pop out clearly. Return ONLY the base64 PNG image data (no markdown, no explanation). Start with "data:image/png;base64,"' },
-                { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64Data } }
-              ]
-            }],
-            max_tokens: 4096
-          })
-        });
-        
-        const data = await res.json();
-        let resultText = data.choices?.[0]?.message?.content || '';
-        
-        resultText = resultText.replace(/```(?:png|json|base64)?\n?/g, '').trim();
-        
-        if (resultText.includes('data:image')) {
-          const output = document.getElementById('aiOutput');
-          output.innerHTML = `
-            <div style="background:#2a2a2a;padding:20px;border-radius:10px;margin-top:20px;">
-              <h4 style="color:#cc0000;margin-bottom:15px;">✨ Enhanced Image:</h4>
-              <div style="display:flex;gap:20px;flex-wrap:wrap;">
-                <div>
-                  <p style="color:#888;margin-bottom:10px;">Original:</p>
-                  <img src="${aiImageData}" style="max-width:200px;border-radius:10px;border:2px solid #333;">
-                </div>
-                <div>
-                  <p style="color:#28a745;margin-bottom:10px;">Enhanced:</p>
-                  <img id="enhancedImg" src="${resultText}" style="max-width:200px;border-radius:10px;border:2px solid #28a745;">
-                </div>
-              </div>
-              <button class="btn btn-success" onclick="downloadEnhanced()" style="margin-top:15px;">💾 Download Enhanced</button>
-            </div>
-          `;
-          showMessage('Image enhanced!', 'success');
-        } else {
-          throw new Error('No image returned');
-        }
-      } catch (e) {
-        showMessage('Error enhancing image. Try a different image.', 'error');
-      }
-      
-      btn.disabled = false;
-      btn.textContent = '✨ Enhance (Remove BG)';
-    }
-    
-    function downloadEnhanced() {
-      const src = document.getElementById('enhancedImg').src;
-      const a = document.createElement('a');
-      a.href = src;
-      a.download = 'enhanced-product-' + Date.now() + '.png';
-      a.click();
-    }
-    
-    async function generateDescription() {
-      const key = localStorage.getItem('ai_api_key');
-      const name = document.getElementById('aiProdName').value;
-      const features = document.getElementById('aiProdFeatures').value;
-      
-      if (!key) {
-        showMessage('Enter an API key first', 'error');
-        return;
-      }
-      if (!name) {
-        showMessage('Enter a product name', 'error');
-        return;
-      }
-      
-      const output = document.getElementById('aiDescriptionOutput');
-      output.textContent = 'Generating...';
-      
-      try {
-        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + key,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': window.location.href,
-            'X-Title': 'WebStore Admin'
-          },
-          body: JSON.stringify({
-            model: 'meta-llama/llama-3.1-8b-instruct',
-            messages: [{
-              role: 'user',
-              content: `Write a compelling product description for an e-commerce store selling desert-themed laser engraved art.
-Product: ${name}
-Features: ${features || 'handcrafted, custom, unique'}
-
-Write 1-2 sentences that are catchy and marketing-focused. Include size info if relevant.`
-            }],
-            max_tokens: 200
-          })
-        });
-        
-        const data = await res.json();
-        const desc = data.choices?.[0]?.message?.content || 'Could not generate description';
-        output.textContent = desc;
-      } catch (e) {
-        output.textContent = 'Error generating description';
-      }
-    }
-    
-    function copyDescription() {
-      const desc = document.getElementById('aiDescriptionOutput').textContent;
-      navigator.clipboard.writeText(desc);
-      showMessage('Copied!', 'success');
-    }
-    
+    loadData();
+  </script>
+</body>
+</html>
     loadData();
   </script>
 </body>
