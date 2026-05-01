@@ -667,6 +667,326 @@
       setTimeout(() => el.style.display = 'none', 4000);
     }
 
+    function showTab(tabId) {
+      const tabs = ['products', 'orders', 'blank', 'analytics', 'settings'];
+      tabs.forEach(t => {
+        const el = document.getElementById(t + 'Tab');
+        if (el) el.style.display = 'none';
+      });
+      document.getElementById(tabId + 'Tab').style.display = 'block';
+      
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+
+      if (tabId === 'orders') renderOrders();
+    }
+
+    function renderOrders(filter = 'pending') {
+      const tbody = document.getElementById('ordersTable');
+      if (!tbody) return;
+      
+      const filtered = (inventory.orders || []).filter(o => !filter || o.status === filter);
+      
+      tbody.innerHTML = filtered.map((o, index) => `
+        <tr>
+          <td>${o.date}</td>
+          <td><strong>${o.customer}</strong><br><small>${o.email}</small></td>
+          <td>${o.items}</td>
+          <td>$${o.total}</td>
+          <td><span style="font-size:0.8em;background:var(--bg-light);padding:4px 8px;border-radius:4px;">${o.status}</span></td>
+          <td>
+            <button class="btn btn-secondary" style="padding:5px 10px;font-size:0.8em;" onclick="updateOrderStatus(${index}, 'shipped')">Ship</button>
+            <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8em;" onclick="deleteOrder(${index})">Del</button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">No orders found.</td></tr>';
+    }
+
+    function saveOrder() {
+      const order = {
+        date: new Date().toLocaleDateString(),
+        customer: document.getElementById('orderCustName').value,
+        email: document.getElementById('orderCustEmail').value,
+        items: document.getElementById('orderItems').value,
+        total: parseFloat(document.getElementById('orderTotal').value) || 0,
+        status: 'pending'
+      };
+
+      if (!order.customer || !order.items) {
+        showMessage('Customer and Items are required!', 'error');
+        return;
+      }
+
+      inventory.orders = inventory.orders || [];
+      inventory.orders.push(order);
+      renderOrders();
+      showOrderForm(); // Hide form
+      showMessage('Order recorded!', 'success');
+      downloadInventory();
+    }
+
+    function filterOrders(status) {
+      renderOrders(status);
+      // Update tab UI
+      document.querySelectorAll('#ordersTab .tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function updateOrderStatus(index, status) {
+      inventory.orders[index].status = status;
+      renderOrders();
+      downloadInventory();
+    }
+
+    function deleteOrder(index) {
+      if (confirm('Delete this order?')) {
+        inventory.orders.splice(index, 1);
+        renderOrders();
+        downloadInventory();
+      }
+    }
+
+    function clearAnalytics() {
+      if (confirm('Reset all analytics data?')) {
+        analytics = { visits: 0, sources: {}, products: {}, history: [], byDate: {} };
+        localStorage.setItem('storeAnalytics', JSON.stringify(analytics));
+        renderAnalytics();
+        showMessage('Analytics reset!', 'success');
+      }
+    }
+
+    function trackVisit() {
+      analytics.visits++;
+      const today = new Date().toISOString().split('T')[0];
+      analytics.byDate = analytics.byDate || {};
+      analytics.byDate[today] = (analytics.byDate[today] || 0) + 1;
+      localStorage.setItem('storeAnalytics', JSON.stringify(analytics));
+    }
+
+    function renderBlankProducts() {
+      const tbody = document.getElementById('blankTable');
+      if (!tbody) return;
+      tbody.innerHTML = (inventory.blankProducts || []).map((p, index) => `
+        <tr>
+          <td><strong>${p.name}</strong></td>
+          <td>$${p.price}</td>
+          <td>
+            <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8em;" onclick="deleteBlank(${index})">Delete</button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px;">No custom templates.</td></tr>';
+    }
+
+    function loadSettings() {
+      if (!inventory.settings) return;
+      const s = inventory.settings;
+      document.getElementById('storeName').value = s.storeName || '';
+      document.getElementById('storeTagline').value = s.storeTagline || '';
+      document.getElementById('paypalEmail').value = s.paypal || '';
+      document.getElementById('contactEmail').value = s.email || '';
+      document.getElementById('socialInstagram').value = s.socialInstagram || '';
+      document.getElementById('socialFacebook').value = s.socialFacebook || '';
+      document.getElementById('socialTwitter').value = s.socialTwitter || '';
+      document.getElementById('socialTiktok').value = s.socialTiktok || '';
+    }
+
+    function renderAnalytics() {
+      document.getElementById('totalVisits').textContent = analytics.visits || 0;
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('todayVisits').textContent = (analytics.byDate && analytics.byDate[today]) || 0;
+      
+      // Basic summary for top products
+      const topProductsDiv = document.getElementById('topProducts');
+      if (topProductsDiv) {
+        const sorted = Object.entries(analytics.products || {}).sort((a,b) => b[1] - a[1]).slice(0, 5);
+        topProductsDiv.innerHTML = sorted.map(([name, count]) => `
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span>${name}</span>
+            <span style="font-weight:600;">${count} views</span>
+          </div>
+        `).join('') || '<p style="color:var(--text-muted);font-size:0.9em;">No view data yet.</p>';
+      }
+    }
+
+    function saveProduct() {
+      const id = document.getElementById('productId').value;
+      const name = document.getElementById('productName').value;
+      const price = parseFloat(document.getElementById('productPrice').value);
+      
+      if (!name || isNaN(price)) {
+        showMessage('Name and Price are required!', 'error');
+        return;
+      }
+
+      const product = {
+        id: id ? parseInt(id) : Date.now(),
+        name: name,
+        description: document.getElementById('productDesc').value,
+        price: price,
+        cost: parseFloat(document.getElementById('productCost').value) || 0,
+        image: document.getElementById('productImage').value,
+        category: document.getElementById('productCategory').value,
+        active: true
+      };
+
+      if (id) {
+        const idx = inventory.products.findIndex(p => p.id == id);
+        inventory.products[idx] = product;
+      } else {
+        inventory.products.push(product);
+      }
+
+      renderAll();
+      hideForm();
+      showMessage('Product saved locally!', 'success');
+      downloadInventory();
+    }
+
+    function editProduct(id) {
+      const p = inventory.products.find(p => p.id == id);
+      if (!p) return;
+      
+      showAddForm();
+      document.getElementById('formTitle').textContent = 'Edit Product';
+      document.getElementById('productId').value = p.id;
+      document.getElementById('productName').value = p.name;
+      document.getElementById('productDesc').value = p.description || '';
+      document.getElementById('productPrice').value = p.price;
+      document.getElementById('productCost').value = p.cost || '';
+      document.getElementById('productImage').value = p.image || '';
+      document.getElementById('productCategory').value = p.category || '';
+    }
+
+    function deleteProduct(id) {
+      if (confirm('Delete this product?')) {
+        inventory.products = inventory.products.filter(p => p.id != id);
+        renderAll();
+        showMessage('Product deleted!', 'success');
+        downloadInventory();
+      }
+    }
+
+    function toggleProduct(id) {
+      const p = inventory.products.find(p => p.id == id);
+      if (p) {
+        p.active = p.active === false ? true : false;
+        renderProducts();
+        showMessage('Status updated!', 'success');
+      }
+    }
+
+    function saveBlankProduct() {
+      const name = document.getElementById('blankName').value;
+      const price = parseFloat(document.getElementById('blankPrice').value);
+      
+      if (!name || isNaN(price)) {
+        showMessage('Name and Price are required!', 'error');
+        return;
+      }
+
+      const blank = {
+        name: name,
+        description: document.getElementById('blankDesc').value,
+        price: price,
+        category: document.getElementById('blankCategory').value,
+        instructions: document.getElementById('blankInstructions').value,
+        active: true
+      };
+
+      inventory.blankProducts.push(blank);
+      renderBlankProducts();
+      showMessage('Custom template added!', 'success');
+      downloadInventory();
+    }
+
+    function deleteBlank(index) {
+      inventory.blankProducts.splice(index, 1);
+      renderBlankProducts();
+      downloadInventory();
+    }
+
+    function saveSettings() {
+      inventory.settings.storeName = document.getElementById('storeName').value;
+      inventory.settings.storeTagline = document.getElementById('storeTagline').value;
+      inventory.settings.paypal = document.getElementById('paypalEmail').value;
+      inventory.settings.email = document.getElementById('contactEmail').value;
+      inventory.settings.socialInstagram = document.getElementById('socialInstagram').value;
+      inventory.settings.socialFacebook = document.getElementById('socialFacebook').value;
+      inventory.settings.socialTwitter = document.getElementById('socialTwitter').value;
+      inventory.settings.socialTiktok = document.getElementById('socialTiktok').value;
+      
+      const newPass = document.getElementById('adminPasswordSetting').value;
+      const confirmPass = document.getElementById('adminPasswordConfirm').value;
+      
+      if (newPass) {
+        if (newPass === confirmPass) {
+          inventory.settings.adminPassword = newPass;
+          showMessage('Settings & Password saved!', 'success');
+        } else {
+          showMessage('Passwords do not match!', 'error');
+          return;
+        }
+      } else {
+        showMessage('Settings saved!', 'success');
+      }
+      
+      downloadInventory();
+    }
+
+    function downloadInventory() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(inventory, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href",     dataStr);
+      downloadAnchorNode.setAttribute("download", "inventory.json");
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    }
+
+    function loadInventoryFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          inventory = JSON.parse(e.target.result);
+          if (!inventory.blankProducts) inventory.blankProducts = [];
+          if (!inventory.orders) inventory.orders = [];
+          renderAll();
+          showMessage('Inventory imported!', 'success');
+        } catch (err) {
+          showMessage('Invalid JSON file!', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function filterTable() {
+      const q = document.getElementById('searchProducts').value.toLowerCase();
+      const rows = document.querySelectorAll('#productsTable tr');
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+
+    function showCloudModal() {
+      document.getElementById('cloudModal').style.display = 'flex';
+    }
+
+    function saveToCloud() {
+      const cloudId = document.getElementById('cloudId').value || 'PF_' + Math.random().toString(36).substr(2, 9);
+      document.getElementById('cloudId').value = cloudId;
+      
+      // In a real serverless app, we'd use a KV store like JSONBin or a custom worker.
+      // For now, we'll simulate it or suggest using the download method.
+      showMessage('Cloud Sync requires a backend. Using local storage for now.', 'error');
+    }
+
+    function loadFromCloud() {
+      showMessage('Cloud Sync requires a backend.', 'error');
+    }
+
     loadData();
   </script>
 </body>

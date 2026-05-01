@@ -1,18 +1,15 @@
 {
-  "products": [
-    {
-      "id": 1,
-      "name": "Cross with wings",
-      "description": "3inch x 3inch",
-      "price": 9,
-      "cost": 0,
-      "image": "cross-with-wings.svg",
-      "category": "coasters",
-      "supplier": "P&F Etching",
-      "stock": 1,
-      "active": true
-    }
-  ],
-  "settings": {},
-  "blankProducts": []
+  "products": [],
+  "settings": {
+    "storeName": "",
+    "storeTagline": "",
+    "paypal": "lexandjon90@gmail.com",
+    "email": "perezroxyandrich@gmail.com",
+    "socialInstagram": "",
+    "socialFacebook": "facebook.com/PandFEtching",
+    "socialTwitter": "",
+    "socialTiktok": ""
+  },
+  "blankProducts": [],
+  "orders": []
 }
