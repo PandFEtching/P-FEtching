@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery - P&F Etching</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #111111;
+      --accent: #007AFF;
+      --bg-light: #F9F9F9;
+      --bg-white: #FFFFFF;
+      --text-main: #1D1D1F;
+      --text-muted: #86868B;
+      --border: #D2D2D7;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Inter', -apple-system, sans-serif; 
+      background: var(--bg-light); 
+      color: var(--text-main);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3 { font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: -0.02em; }
+
+    header { 
+      background: var(--bg-white); 
+      padding: 20px; 
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 2em; color: var(--primary); margin-bottom: 4px; }
+    header p { font-size: 0.9em; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; }
+    
+    nav { 
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 12px 20px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      gap: 20px; 
+      position: sticky; 
+      top: 0; 
+      z-index: 1000; 
+      border-bottom: 1px solid var(--border);
+    }
+    nav a { 
+      color: var(--text-main); 
+      text-decoration: none; 
+      font-size: 0.9em;
+      font-weight: 500;
+      padding: 8px 12px; 
+      border-radius: 8px; 
+      transition: all 0.2s; 
+    }
+    nav a:hover { background: var(--bg-light); color: var(--accent); }
+    
+    .container { max-width: 1200px; margin: 0 auto; padding: 60px 20px; }
+    
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
+    
+    .gallery-item { 
+      background: var(--bg-white); 
+      border-radius: 16px; 
+      overflow: hidden; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--border);
+    }
+    .gallery-item:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+    
+    .gallery-image { 
+      width: 100%; 
+      height: 350px; 
+      background: #fdfdfd; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      overflow: hidden;
+    }
+    .gallery-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+    .gallery-item:hover .gallery-image img { transform: scale(1.05); }
+    
+    .gallery-info { padding: 20px; }
+    .gallery-name { color: var(--primary); font-size: 1.1em; margin-bottom: 4px; }
+    .gallery-desc { color: var(--text-muted); font-size: 0.9em; }
+
+    footer { background: var(--bg-white); padding: 80px 20px; text-align: center; border-top: 1px solid var(--border); }
+    footer h3 { margin-bottom: 20px; }
+    footer p { color: var(--text-muted); margin-bottom: 10px; }
+
+    @media (max-width: 768px) {
+      .gallery-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>P&F Etching</h1>
+    <p>Modern Precision Laser Studio</p>
+  </header>
+  
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="index.html#products">Shop</a>
+    <a href="gallery.html" style="color: var(--accent);">Gallery</a>
+    <a href="index.html#contact">Contact</a>
+  </nav>
+  
+  <section class="container">
+    <h2 style="margin-bottom: 40px; text-align: center;">Our Past Work</h2>
+    <div class="gallery-grid" id="galleryGrid">
+      <p style="text-align:center;grid-column:1/-1;color:#666;">Loading gallery...</p>
+    </div>
+  </section>
+  
+  <footer id="contact">
+    <h3>Interested in something similar?</h3>
+    <p>We can recreate any of these designs or start something entirely new.</p>
+    <p>Email: <span id="contactEmail">contact@example.com</span></p>
+    <p style="font-size: 0.8em; color: var(--text-muted); margin-top: 30px;">Precision Laser Studio &copy; 2026</p>
+  </footer>
+
+  <script>
+    async function loadGallery() {
+      try {
+        const response = await fetch('inventory.json');
+        const inventory = await response.json();
+        
+        const galleryGrid = document.getElementById('galleryGrid');
+        const contactEmail = document.getElementById('contactEmail');
+        
+        if (inventory.settings && inventory.settings.email) {
+          contactEmail.textContent = inventory.settings.email;
+        }
+
+        const galleryItems = inventory.gallery || [];
+        
+        if (galleryItems.length === 0) {
+          galleryGrid.innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#666;">No items in the gallery yet. Check back soon!</p>';
+          return;
+        }
+
+        galleryGrid.innerHTML = galleryItems.map(item => {
+          const imgPath = item.image?.startsWith('http') || item.image?.startsWith('images/') ? item.image : 'images/' + item.image;
+          return `
+            <div class="gallery-item">
+              <div class="gallery-image">
+                <img src="${imgPath}" alt="${item.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\\'color:#666;padding:20px;\\'>${item.name}</span>'">
+              </div>
+              <div class="gallery-info">
+                <h3 class="gallery-name">${item.name}</h3>
+                <p class="gallery-desc">${item.description || ''}</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error('Error loading gallery:', e);
+        document.getElementById('galleryGrid').innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#666;">Error loading gallery.</p>';
+      }
+    }
+    
+    loadGallery();
+  </script>
+</body>
+</html>

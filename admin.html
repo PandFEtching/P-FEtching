@@ -253,6 +253,7 @@
     
     <div class="tabs">
       <button class="tab active" onclick="showTab('products')">Inventory</button>
+      <button class="tab" onclick="showTab('gallery')">Gallery</button>
       <button class="tab" onclick="showTab('orders')">Orders</button>
       <button class="tab" onclick="showTab('blank')">Custom Items</button>
       <button class="tab" onclick="showTab('analytics')">Insights</button>
@@ -366,6 +367,48 @@
             </tr>
           </thead>
           <tbody id="blankTable"></tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div id="galleryTab" style="display:none;">
+      <div class="panel">
+        <h2>Gallery Management</h2>
+        <p style="color:var(--text-muted);margin-bottom:25px;font-size:0.9em;">Display your past work to inspire customers.</p>
+        
+        <div id="galleryForm" style="background:var(--bg-light);padding:25px;border-radius:12px;margin-bottom:30px;">
+          <h3 id="galleryFormTitle" style="margin-bottom:20px;">Add Gallery Item</h3>
+          <input type="hidden" id="galleryItemId">
+          
+          <div class="form-group">
+            <label>Item Name *</label>
+            <input type="text" id="galleryName" placeholder="e.g., Custom Wedding Portrait">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="galleryDesc" placeholder="e.g., Laser etched on walnut wood, 12x18 inches.">
+          </div>
+          <div class="form-group">
+            <label>Image Path</label>
+            <input type="text" id="galleryImage" placeholder="images/gallery1.jpg">
+          </div>
+          <div style="display:flex;gap:12px;">
+            <button class="btn" onclick="saveGalleryItem()">Save Gallery Item</button>
+            <button class="btn btn-secondary" onclick="clearGalleryForm()">Clear</button>
+          </div>
+        </div>
+        
+        <h3 style="margin-bottom:15px;font-size:1.1em;">Current Gallery</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="galleryTable"></tbody>
         </table>
       </div>
     </div>
@@ -518,7 +561,7 @@
   <input type="file" id="inventoryFile" accept=".json" style="display: none;" onchange="loadInventoryFile(event)">
   
   <script>
-    let inventory = { products: [], settings: {}, blankProducts: [], orders: [] };
+    let inventory = { products: [], settings: {}, blankProducts: [], orders: [], gallery: [] };
     let analytics = { visits: 0, sources: {}, products: {}, history: [], byDate: {} };
     let cameraStream = null;
     let capturedPhotos = [];
@@ -537,10 +580,11 @@
           inventory = data;
           if (!inventory.blankProducts) inventory.blankProducts = [];
           if (!inventory.orders) inventory.orders = [];
+          if (!inventory.gallery) inventory.gallery = [];
           renderAll();
         })
         .catch(() => {
-          inventory = { products: [], settings: {}, blankProducts: [], orders: [] };
+          inventory = { products: [], settings: {}, blankProducts: [], orders: [], gallery: [] };
           renderAll();
         });
       
@@ -595,8 +639,81 @@
       renderStats();
       renderProducts();
       renderBlankProducts();
+      renderGallery();
       loadSettings();
       renderAnalytics();
+    }
+
+    function renderGallery() {
+      const tbody = document.getElementById('galleryTable');
+      if (!tbody) return;
+      
+      tbody.innerHTML = (inventory.gallery || []).map((item, index) => {
+        const imgPath = item.image?.startsWith('http') || item.image?.startsWith('images/') ? item.image : 'images/' + item.image;
+        return `
+          <tr>
+            <td><img src="${imgPath}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'"></td>
+            <td><strong>${item.name}</strong></td>
+            <td>${item.description || ''}</td>
+            <td>
+              <button class="btn btn-secondary" style="padding:5px 10px;font-size:0.8em;" onclick="editGalleryItem(${index})">Edit</button>
+              <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8em;" onclick="deleteGalleryItem(${index})">Del</button>
+            </td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">No gallery items yet.</td></tr>';
+    }
+
+    function saveGalleryItem() {
+      const id = document.getElementById('galleryItemId').value;
+      const name = document.getElementById('galleryName').value;
+      const desc = document.getElementById('galleryDesc').value;
+      const image = document.getElementById('galleryImage').value;
+      
+      if (!name) {
+        showMessage('Name is required!', 'error');
+        return;
+      }
+
+      const item = { name, description: desc, image };
+
+      if (id !== "") {
+        inventory.gallery[parseInt(id)] = item;
+      } else {
+        inventory.gallery.push(item);
+      }
+
+      renderGallery();
+      clearGalleryForm();
+      showMessage('Gallery item saved!', 'success');
+      downloadInventory();
+    }
+
+    function editGalleryItem(index) {
+      const item = inventory.gallery[index];
+      document.getElementById('galleryItemId').value = index;
+      document.getElementById('galleryName').value = item.name;
+      document.getElementById('galleryDesc').value = item.description || '';
+      document.getElementById('galleryImage').value = item.image || '';
+      document.getElementById('galleryFormTitle').textContent = 'Edit Gallery Item';
+      document.getElementById('galleryForm').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function deleteGalleryItem(index) {
+      if (confirm('Delete this gallery item?')) {
+        inventory.gallery.splice(index, 1);
+        renderGallery();
+        showMessage('Item deleted!', 'success');
+        downloadInventory();
+      }
+    }
+
+    function clearGalleryForm() {
+      document.getElementById('galleryItemId').value = '';
+      document.getElementById('galleryName').value = '';
+      document.getElementById('galleryDesc').value = '';
+      document.getElementById('galleryImage').value = '';
+      document.getElementById('galleryFormTitle').textContent = 'Add Gallery Item';
     }
     
     function renderStats() {
@@ -668,7 +785,7 @@
     }
 
     function showTab(tabId) {
-      const tabs = ['products', 'orders', 'blank', 'analytics', 'settings'];
+      const tabs = ['products', 'orders', 'blank', 'analytics', 'settings', 'gallery'];
       tabs.forEach(t => {
         const el = document.getElementById(t + 'Tab');
         if (el) el.style.display = 'none';
@@ -679,6 +796,7 @@
       event.target.classList.add('active');
 
       if (tabId === 'orders') renderOrders();
+      if (tabId === 'gallery') renderGallery();
     }
 
     function renderOrders(filter = 'pending') {
@@ -952,6 +1070,7 @@
           inventory = JSON.parse(e.target.result);
           if (!inventory.blankProducts) inventory.blankProducts = [];
           if (!inventory.orders) inventory.orders = [];
+          if (!inventory.gallery) inventory.gallery = [];
           renderAll();
           showMessage('Inventory imported!', 'success');
         } catch (err) {
