@@ -537,6 +537,10 @@
               <input type="email" id="paypalEmail">
             </div>
             <div class="form-group">
+              <label>PayPal Client ID (for Credit Cards)</label>
+              <input type="text" id="paypalClientId" placeholder="Get this from developer.paypal.com">
+            </div>
+            <div class="form-group">
               <label>Contact Email</label>
               <input type="email" id="contactEmail">
             </div>
@@ -901,6 +905,7 @@
       document.getElementById('storeName').value = s.storeName || '';
       document.getElementById('storeTagline').value = s.storeTagline || '';
       document.getElementById('paypalEmail').value = s.paypal || '';
+      document.getElementById('paypalClientId').value = s.paypalClientId || '';
       document.getElementById('contactEmail').value = s.email || '';
       document.getElementById('socialInstagram').value = s.socialInstagram || '';
       document.getElementById('socialFacebook').value = s.socialFacebook || '';
@@ -1027,6 +1032,7 @@
       inventory.settings.storeName = document.getElementById('storeName').value;
       inventory.settings.storeTagline = document.getElementById('storeTagline').value;
       inventory.settings.paypal = document.getElementById('paypalEmail').value;
+      inventory.settings.paypalClientId = document.getElementById('paypalClientId').value;
       inventory.settings.email = document.getElementById('contactEmail').value;
       inventory.settings.socialInstagram = document.getElementById('socialInstagram').value;
       inventory.settings.socialFacebook = document.getElementById('socialFacebook').value;

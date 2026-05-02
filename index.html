@@ -320,7 +320,8 @@
           <p style="color:var(--text-muted);">3. We'll email you for art/details.</p>
         </div>
         
-        <button class="checkout-btn" onclick="checkout()">Place Order via Email</button>
+        <div id="paypal-button-container" style="margin-top: 20px;"></div>
+        <button id="manualCheckoutBtn" class="checkout-btn" onclick="checkout()">Place Order via Email</button>
       </div>
     </div>
   </div>
@@ -389,9 +390,107 @@
         renderFilters();
         updateContactInfo();
         document.getElementById('paypalEmailDisplay').textContent = inventory.settings.paypal || 'your-paypal@email.com';
+        
+        if (inventory.settings.paypalClientId) {
+          initPayPal();
+        }
       } catch (e) {
         document.getElementById('productsGrid').innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#666;">Loading products...</p>';
       }
+    }
+
+    function initPayPal() {
+      const script = document.createElement('script');
+      script.src = `https://www.paypal.com/sdk/js?client-id=${inventory.settings.paypalClientId}&currency=USD`;
+      script.onload = () => {
+        renderPayPalButtons();
+      };
+      document.head.appendChild(script);
+      document.getElementById('manualCheckoutBtn').style.display = 'none';
+    }
+
+    function renderPayPalButtons() {
+      const container = document.getElementById('paypal-button-container');
+      container.innerHTML = '';
+      
+      paypal.Buttons({
+        style: {
+          layout: 'vertical',
+          color:  'gold',
+          shape:  'rect',
+          label:  'paypal'
+        },
+        createOrder: function(data, actions) {
+          const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+          if (total <= 0) {
+            alert('Cart is empty!');
+            return;
+          }
+          
+          const name = document.getElementById('custName').value.trim();
+          const address = document.getElementById('custAddress').value.trim();
+          const email = document.getElementById('custEmail').value.trim();
+          
+          if (!name || !address || !email) {
+            alert('Please fill in shipping details first!');
+            return actions.reject();
+          }
+
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: total.toString()
+              },
+              description: 'Order from P&F Etching'
+            }]
+          });
+        },
+        onApprove: function(data, actions) {
+          return actions.order.capture().then(function(details) {
+            alert('Transaction completed by ' + details.payer.name.given_name + '!');
+            completeCheckout(details.id);
+          });
+        }
+      }).render('#paypal-button-container');
+    }
+
+    function completeCheckout(transactionId) {
+      const name = document.getElementById('custName').value.trim();
+      const address = document.getElementById('custAddress').value.trim();
+      const email = document.getElementById('custEmail').value.trim();
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const paypalEmail = inventory.settings.paypal || 'your-paypal@email.com';
+      const sellerEmail = inventory.settings.email || paypalEmail;
+      
+      let itemsList = cart.map(item => `- ${item.name} (${item.qty}x) - $${item.price * item.qty}`).join('\n');
+      const blankItems = cart.filter(i => i.id?.toString().startsWith('blank_'));
+      let instructions = '';
+      if (blankItems.length) {
+        instructions = '\n\nNote: Customer will email custom photo separately.';
+      }
+
+      const emailBody = `PAID ORDER - P&F Etching\n` +
+                        `Transaction ID: ${transactionId}\n` +
+                        `--------------------------\n` +
+                        `CUSTOMER INFO:\n` +
+                        `Name: ${name}\n` +
+                        `Address: ${address}\n` +
+                        `Email: ${email}\n\n` +
+                        `ORDER DETAILS:\n` +
+                        `${itemsList}\n\n` +
+                        `TOTAL: $${total}\n` +
+                        `--------------------------\n` +
+                        `This order was PAID via Credit Card/PayPal.${instructions}`;
+
+      const mailtoUrl = `mailto:${sellerEmail}?subject=PAID Order - ${name}&body=${encodeURIComponent(emailBody)}`;
+      window.location.href = mailtoUrl;
+      
+      cart = [];
+      updateCartUI();
+      closeCart();
+      document.getElementById('custName').value = '';
+      document.getElementById('custAddress').value = '';
+      document.getElementById('custEmail').value = '';
     }
     
     function renderProducts() {
