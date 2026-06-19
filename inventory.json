@@ -1,16 +1,17 @@
 {
-  "products": [],
-  "settings": {
-    "storeName": "",
-    "storeTagline": "",
-    "paypal": "lexandjon90@gmail.com",
-    "paypalClientId": "",
-    "email": "perezroxyandrich@gmail.com",
-    "socialInstagram": "",
-    "socialFacebook": "facebook.com/PandFEtching",
-    "socialTwitter": "",
-    "socialTiktok": ""
-  },
+  "products": [
+    {
+      "id": 1781889029126,
+      "name": "Fathers Day mdf board 90mmx90mm",
+      "description": "Ultra high detail Fathers day mdf board.",
+      "price": 9,
+      "cost": 5,
+      "image": "",
+      "category": "",
+      "active": true
+    }
+  ],
+  "settings": {},
   "blankProducts": [],
   "orders": [],
   "gallery": []
